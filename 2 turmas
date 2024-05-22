@@ -1,0 +1,454 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+typedef struct aluno {
+  char nome[100];
+  float media;
+  int faltas;
+} Aluno;
+
+typedef struct node{
+  struct node *ant;
+  struct node *prox;
+  Aluno *info;
+} Node;
+
+typedef struct ldeCirc{
+  Node *inicio;
+  Node *fim;
+  int qtd;
+} LDECirc;
+
+void inicializar(LDECirc *lista) {
+  lista->inicio = NULL;
+  lista->qtd = 0;
+  lista->fim = NULL;
+}
+
+int isEmpty(LDECirc lista) {
+  if ((lista.inicio == NULL) && (lista.fim == NULL) && (lista.qtd == 0)) {
+    return 1;
+  } else {
+    return 0;
+  }
+}
+
+void exibirOpcoes() {
+  printf("\nOpções: \n");
+  printf("1 –Cadastrar aluno \n");
+  printf("2 –Listar os alunos \n");
+  printf("3 –Consultar aluno \n");
+  printf("4 –Alterar média final de um aluno\n");
+  printf("5 –Alterar a quantidade de faltas de um aluno\n");
+  printf("6 –Exibir os dados de um aluno\n");
+  printf("7 –Remover um aluno do cadastro\n");
+  printf("8 -Limpar cadastro\n");
+  printf("0 -Encerrar programa \n");
+  printf("Informe a opção desejada: ");
+}
+
+Aluno *criarAluno(char n[]){
+  float media;
+  int faltas;
+  Aluno* novoAluno = (Aluno*)malloc(sizeof(Aluno));
+  strcpy(novoAluno->nome, n);
+
+  printf("Informe a média do aluno: ");
+  scanf("%f",&media);
+  novoAluno->media = media;
+
+  printf("Informe o número de faltas do aluno: ");
+  scanf("%d",&faltas);
+  novoAluno->faltas = faltas;
+
+  return novoAluno;
+}
+
+Node *criarNode(Aluno *al){
+  Node *novoNode = (Node*)malloc(sizeof(Node));
+  novoNode->ant = NULL;
+  novoNode->prox = NULL;
+  novoNode->info = al;
+  return novoNode;
+}
+
+void cadastrar(LDECirc* lista){
+  Aluno *novoAluno;
+  Node *novo, *aux;
+  int retorno;
+  char nomeAux[100];
+  printf("Informe o nome do aluno: ");
+  setbuf(stdin,NULL);
+  fgets(nomeAux,100,stdin);
+  
+  if (isEmpty(*lista)==1){
+    novoAluno = criarAluno(nomeAux);
+    novo = criarNode(novoAluno);
+    lista->inicio = novo;
+    lista->fim = novo;
+    lista->qtd++;
+    lista->fim->prox = lista->inicio;
+    lista->inicio->ant = lista->fim;
+    printf("Inserção efetuada!\n");
+  }
+  else{
+    if (strcmp(lista->inicio->info->nome,nomeAux) == 0 || strcmp(lista->fim->info->nome,nomeAux) == 0){
+      printf("Aluno já cadastrado!\n");
+      return;
+    }
+    else if (strcmp(lista->inicio->info->nome, nomeAux) > 0){ //inserir no inicio
+      novoAluno = criarAluno(nomeAux);
+      novo = criarNode(novoAluno); 
+      novo->prox = lista->inicio;
+      lista->inicio->ant = novo;      
+      lista->inicio = novo;
+      lista->fim->prox = lista->inicio;
+      lista->inicio->ant = lista->fim;      
+      lista->qtd++;
+      printf("Inserção efetuada!\n");
+      
+    }
+    else if (strcmp(lista->inicio->info->nome, nomeAux) < 0){ //inserir no final
+      novoAluno = criarAluno(nomeAux);
+      novo = criarNode(novoAluno); 
+      novo->ant = lista->fim;
+      lista->fim->prox = novo;
+      lista->fim = novo;
+      lista->inicio->ant = lista->fim;
+      lista->fim->prox = lista->inicio;
+      lista->qtd++;
+      printf("Inserção efetuada!\n");
+      
+    }
+    else{
+      aux = lista->inicio->prox;
+      while(aux != lista->inicio){
+        retorno = strcmp(aux->info->nome, nomeAux);
+        if (retorno == 0){
+          printf("Aluno já cadastrado!\n");
+          return;
+        }
+        else if(retorno > 0){
+          novoAluno = criarAluno(nomeAux);
+          novo = criarNode(novoAluno); 
+          aux->ant->prox = novo;
+          novo->ant = aux->ant;
+          aux->ant = novo;
+          novo->prox = aux;
+          lista->qtd++;
+          printf("Inserção efetuada!\n");
+        }
+        else{
+          aux = aux->prox;
+        }
+      }
+    }
+  }
+}
+
+void listar(LDECirc lista){
+  Node *aux = lista.inicio;
+  if (isEmpty(lista)==1){
+    printf("Lista vazia!\n");
+  } else{
+    do{
+      printf("\nNome: %s",aux->info->nome);
+      printf("Media: %.2f\n",aux->info->media);
+      printf("Faltas: %d\n",aux->info->faltas);
+      aux = aux->prox;
+    } while (aux != lista.inicio);
+    printf("%d ",lista.qtd);
+    printf("\n");
+  }
+}
+
+Node *consultar(LDECirc *lista, char nome[]){
+  if (isEmpty(*lista)==1){
+    printf("Lista vazia!\n");
+    return NULL;
+  }
+  else{
+    if (strcmp(lista->inicio->info->nome, nome)==0){
+      return lista->inicio;
+    } 
+    else if (strcmp(lista->fim->info->nome,nome)==0){
+      return lista->fim;
+    } else{
+      Node *aux = lista->inicio->prox;
+      while(aux != lista->inicio){
+        if (strcmp(aux->info->nome,nome)==0){
+          return aux;
+        } else{
+          aux = aux->prox;
+        }
+      }
+    }
+    
+  }
+  
+  return NULL;
+}
+
+void alterarMedia(LDECirc *lista, char nome[]){
+  Node *retorno = consultar(lista, nome);
+  float media;
+  if (retorno == NULL){
+    printf("A alteração não pode ser efetuada, pois o nome não existe no cadastro!\n");
+  } 
+  else{
+    printf("Informe a média nova: ");
+    scanf("%f",&media);
+    retorno->info->media = media;
+    listar(*lista);
+  }
+}
+
+void alterarFaltas(LDECirc *lista, char nome[]){
+  Node *retorno = consultar(lista, nome);
+  int faltas, abono;
+  if (retorno == NULL){
+    printf("A alteração não pode ser efetuada, pois o nome dado não existe no cadastro!\n");
+  } 
+  else{
+    printf("\n1 - Acrescentar faltas\n");
+    printf("2 - Subtrair faltas\n");
+    scanf("%d",&abono);
+    switch(abono){
+      case 1:
+        printf("Informe o número de faltas a serem acrescentadas: ");
+        scanf("%d",&faltas);
+        retorno->info->faltas = retorno->info->faltas + faltas;
+        break;
+      case 2:
+        printf("Informe o número de faltas a serem subtraídas: ");
+        scanf("%d",&faltas);
+        retorno->info->faltas = retorno->info->faltas - faltas;
+        break;
+    }
+
+    listar(*lista);
+  }
+}
+
+void exibirAluno(LDECirc lista, char nome[]){
+  Node *retorno = consultar(&lista, nome);
+  if (retorno == NULL){
+    printf("O nome fornecido não é válido, pois não existe no cadastro!\n");
+  }
+  else{
+    printf("\nNome: %s",retorno->info->nome);
+    printf("Media: %.2f\n",retorno->info->media);
+    printf("Faltas: %d\n",retorno->info->faltas);
+  }
+}
+
+void removerAluno(LDECirc *lista, char nome[]){
+  Node *retorno = consultar(lista, nome);
+  if (retorno == NULL){
+    printf("O nome fornecido não é válido, pois não existe no cadastro!\n");
+  }
+  else{
+    if (retorno == lista->inicio){
+      if (lista->qtd == 1){
+        lista->inicio = NULL;
+        lista->fim = NULL;
+        printf("Removido(a): %s",retorno->info->nome);
+        free(retorno);
+        lista->qtd--;
+      } else{
+        lista->inicio = retorno->prox;
+        lista->inicio->ant = lista->fim;
+        lista->fim->prox = lista->inicio;
+        printf("Removido(a): %s",retorno->info->nome);
+        free(retorno);
+        lista->qtd--;
+      }
+    }
+    else if (retorno == lista->fim){
+      lista->fim = retorno->ant;
+      lista->inicio->ant = lista->fim;
+      lista->fim->prox = lista->inicio;
+      printf("Removido(a): %s",retorno->info->nome);
+      free(retorno);
+      lista->qtd--;
+    }
+    else{
+      Node *aux = retorno->ant;
+      aux->prox = retorno->prox;
+      aux->prox->ant = aux;
+      printf("Removido(a): %s",retorno->info->nome);
+      free(retorno->info);
+      free(retorno);
+      lista->qtd--;
+      
+    }
+  }
+}
+
+void limparCadastro(LDECirc *lista){
+  if (isEmpty(*lista)==1){
+    printf("Lista vazia!\n");
+  }
+  else{
+    do{
+      removerAluno(lista, lista->inicio->info->nome);
+    } while (lista->inicio != NULL);    
+  }
+}
+
+int main(void) {
+  LDECirc turma1, turma2;
+  inicializar(&turma1);
+  inicializar(&turma2);
+  char nom[100];
+  float med;
+  int num,op,list;
+  Node *retorno;
+  
+  do{
+    exibirOpcoes();
+    scanf("%d",&op);
+    
+    switch (op){
+      case 1:
+        printf("\nDigite 1 para cadastrar na turma 1, e digite 2 para cadastrar na turma 2: ");
+        scanf("%d",&list);
+        switch(list){
+          case 1:
+            cadastrar(&turma1);
+            break;
+          case 2:
+            cadastrar(&turma2);
+            break;
+        }
+
+        break;
+      case 2:
+        printf("Mostrar a lista 1, 2, ou todas?\n (3 para todas)\n");
+        scanf("%d",&list);
+        switch(list){
+          case 1:
+            listar(turma1);
+            break;
+          case 2:
+            listar(turma2);
+            break;
+          case 3:
+            printf("\n\nTurma 1: \n");
+            listar(turma1);
+            printf("\nTurma 2: \n");
+            listar(turma2);
+            break;
+        }
+        break;
+      case 3:
+        printf("Digite o nome do aluno: ");
+        setbuf(stdin,NULL);
+        fgets(nom,100,stdin);
+        printf("Digite a turma do aluno: ");
+        scanf("%d",&list);
+        switch(list){
+          case 1:
+            retorno = consultar(&turma1,nom);
+            if (retorno != NULL){
+              printf("%s encontrado(a) na lista %d e no endereço %p\n",retorno->info->nome,list,retorno);
+            } else{
+              printf("Aluno não encontrado na lista %d!\n",list);
+            }
+            break;
+          case 2:
+            retorno = consultar(&turma2,nom);
+            if (retorno != NULL){
+              printf("%s encontrado(a) na lista %d e no endereço %p\n",retorno->info->nome,list,retorno);
+            } else{
+              printf("Aluno não encontrado na lista %d!\n",list);
+            }
+            break;
+        }
+
+        break;
+      case 4:
+        printf("Digite o nome do aluno: ");
+        setbuf(stdin,NULL);
+        fgets(nom,100,stdin);
+        printf("Digite a turma do aluno: ");
+        scanf("%d",&list);
+        switch(list){
+          case 1:
+            alterarMedia(&turma1,nom);
+            break;
+          case 2:
+            alterarMedia(&turma2,nom);
+            break;
+        }
+
+        break;
+      case 5:
+        printf("Digite o nome do aluno: ");
+        setbuf(stdin,NULL);
+        fgets(nom,100,stdin);
+        printf("Digite a turma do aluno: ");
+        scanf("%d",&list);
+        switch(list){
+          case 1:
+            alterarFaltas(&turma1,nom);
+            break;
+          case 2:
+            alterarFaltas(&turma2,nom);
+            break;
+        }
+        
+        break;
+      case 6:
+        printf("Digite o nome do aluno: ");
+        setbuf(stdin,NULL);
+        fgets(nom,100,stdin);
+        printf("Digite a turma do aluno: ");
+        scanf("%d",&list);
+        switch(list){
+          case 1:
+            exibirAluno(turma1,nom);
+            break;
+          case 2:
+            exibirAluno(turma2,nom);
+            break;
+        }
+        break;
+      case 7:
+        printf("Digite o nome do aluno: ");
+        setbuf(stdin,NULL);
+        fgets(nom,100,stdin);
+        printf("Digite a turma do aluno: ");
+        scanf("%d",&list);
+        switch(list){
+          case 1:
+            removerAluno(&turma1, nom);
+            break;
+          case 2:
+            removerAluno(&turma2, nom);
+            break;
+        }
+        break;
+      case 8:
+        printf("Qual cadastro deseja limpar? ");
+        scanf("%d",&list);
+        switch(list){
+          case 1:
+            limparCadastro(&turma1);
+            break;
+          case 2:
+            limparCadastro(&turma1);
+            break;
+        }
+        break;
+      case 0: 
+        printf("Fim de programa! \n");
+        break;
+      default: printf("Opção inválida! \n");
+    }
+  } while (op!=0);
+  
+  return 0;
+  
+}
